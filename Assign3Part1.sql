@@ -1,25 +1,22 @@
-DECLARE
-    
-    -- Outer cursor
-    CURSOR trans_cursor IS
-    
-    
-    -- Inner cursor
-    
 
+DECLARE
+    -- Outer cursor to fetch distinct transaction numbers
+    CURSOR trans_cursor IS
+        SELECT DISTINCT TRANSACTION_NUMBER
+        FROM NEW_TRANSACTIONS;
+    
+    -- Inner cursor to fetch transaction-level data for a specific transaction number
+    CURSOR trans_details_cursor(p_transaction_number NEW_TRANSACTIONS.TRANSACTION_NUMBER%TYPE) IS
+        SELECT TRANSACTION_DATE, DESCRIPTION
+        FROM NEW_TRANSACTIONS
+        WHERE TRANSACTION_NUMBER = p_transaction_number;
 
 BEGIN 
-    -- loop
-    For 
-    
-    
-        -- nested loop
-        For
-        
-        
-        End Loop;
-        
-        
+    -- Outer loop: Loop through each distinct transaction number
+    FOR trans_rec IN trans_cursor LOOP
+        -- Inner loop: Loop through each row for the current transaction number
+        FOR trans_details_rec IN trans_details_cursor(trans_rec.TRANSACTION_NUMBER) LOOP
+            
         -- Insert summary row into TRANSACTION_HISTORY
         INSERT INTO transaction_history (
             transaction_no, transaction_date, description
