@@ -1,8 +1,31 @@
+/* 
+Assignment 3 - Part 1: WKIS Transaction Processing
+Group Members: Lulubelle, Gabriel, Mitzi, Nicole
+Date: April 2025
+
+Description:
+- Processes transactions from NEW_TRANSACTIONS table
+- Inserts each row into TRANSACTION_DETAIL
+- Updates ACCOUNT balances based on default transaction type
+- After processing all rows in a transaction:
+    - Inserts summary into TRANSACTION_HISTORY
+    - Deletes processed rows from NEW_TRANSACTIONS 
+
+Follows all assignment restrictions:
+- No SELECT INTO from NEW_TRANSACTIONS
+- No use of arrays, GOTOs, stored procedures, or SAVEPOINTs
+*/
+
+
+
+
 declare
     -- Outer cursor to fetch distinct transaction numbers
-   cursor trans_cursor is
-   select distinct transaction_no
-     from new_transactions;
+      CURSOR trans_cursor IS
+        SELECT DISTINCT transaction_no, transaction_date, description
+        FROM new_transactions
+        ORDER BY transaction_no;
+
     
     -- Inner cursor to fetch transaction-level data for a specific transaction number
    cursor trans_details_cursor (
@@ -24,18 +47,29 @@ declare
         where a.account_no = p_account_no;
 
     v_default_trans_type account_type.default_trans_type%type;
-    v_transaction_date DATE; --added by gab
-    v_description VARCHAR2(100); -- added by gab  
+    v_transaction_date DATE;
+    v_description VARCHAR2(100); 
 
 begin 
     -- Outer loop: Loop through each distinct transaction number
    for trans_rec in trans_cursor loop
    
+   -- Insert summary row into TRANSACTION_HISTORY
+        INSERT INTO transaction_history (
+            transaction_no, transaction_date, description
+        ) VALUES (
+            trans_rec.transaction_no,
+            trans_rec.transaction_date,
+            trans_rec.description
+        );
+   
         -- Inner loop: Loop through each row for the current transaction number
       for trans_details_rec in trans_details_cursor(trans_rec.transaction_no) loop
       
-      v_transaction_date := trans_details_rec.transaction_date; -- added by gab
-      v_description := trans_details_rec.description; -- added by gab
+      
+      
+      v_transaction_date := trans_details_rec.transaction_date; 
+      v_description := trans_details_rec.description; 
       
         -- Fetch the default transaction type
         open account_type_cursor(trans_details_rec.account_no);
@@ -81,20 +115,9 @@ begin
                     trans_details_rec.transaction_type,
                     trans_details_rec.transaction_amount );
 
-      end loop; -- inserted 04012025 Bhel
+      end loop; 
         
-        -- Insert into TRANSACTION_HISTORY
-       insert into transaction_history (
-            transaction_no,
-            transaction_date,
-            description
-        ) values (
-            trans_rec.transaction_no,
-            v_transaction_date, -- changed by gab
-            v_description  -- changed by gab
-        );
-
-        -- Delete processed rows from NEW_TRANSACTIONS 
+    -- Delete processed rows from NEW_TRANSACTIONS 
       delete from new_transactions
        where transaction_no = trans_rec.transaction_no;
 
