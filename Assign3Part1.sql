@@ -15,7 +15,10 @@ BEGIN
         -- Inner loop: Loop through each row for the current transaction number
         FOR trans_details_rec IN trans_details_cursor(trans_rec.transaction_no) LOOP
             -- Insert summary row into TRANSACTION_HISTORY
-            INSERT INTO transaction_history (
+        
+        END LOOP; -- inserted 04012025 Bhel
+        
+         INSERT INTO transaction_history (
                 transaction_no, transaction_date, description
             ) VALUES (
                 trans_rec.transaction_no,
@@ -23,11 +26,12 @@ BEGIN
                 trans_details_rec.description
             );
 
+
         -- Delete processed rows from NEW_TRANSACTIONS 
         DELETE FROM new_transactions
         WHERE transaction_no = trans_rec.transaction_no;
 
-        END LOOP;
+    END LOOP;
     
     COMMIT;
     
