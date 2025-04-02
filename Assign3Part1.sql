@@ -1,43 +1,56 @@
-DECLARE
+declare
     -- Outer cursor to fetch distinct transaction numbers
-    CURSOR trans_cursor IS
-        SELECT DISTINCT transaction_no FROM NEW_TRANSACTIONS;
+   cursor trans_cursor is
+   select distinct transaction_no
+     from new_transactions;
     
     -- Inner cursor to fetch transaction-level data for a specific transaction number
-    CURSOR trans_details_cursor(p_transaction_number NEW_TRANSACTIONS.transaction_no%TYPE) IS
-        SELECT transaction_date, description
-        FROM NEW_TRANSACTIONS
-        WHERE transaction_no = p_transaction_number;
+   cursor trans_details_cursor (
+      p_transaction_number new_transactions.transaction_no%type
+   ) is
+   select transaction_date,
+          description,
+          account_no,
+          transaction_type,
+          transaction_amount
+     from new_transactions
+    where transaction_no = p_transaction_number;
 
-BEGIN 
+begin 
     -- Outer loop: Loop through each distinct transaction number
-    FOR trans_rec IN trans_cursor LOOP
+   for trans_rec in trans_cursor loop
         -- Inner loop: Loop through each row for the current transaction number
-        FOR trans_details_rec IN trans_details_cursor(trans_rec.transaction_no) LOOP
-            -- Insert summary row into TRANSACTION_HISTORY
+      for trans_details_rec in trans_details_cursor(trans_rec.transaction_no) loop
+
+            -- Insert into TRANSACTION_DETAIL
+         insert into transaction_detail (
+            account_no,
+            transaction_no,
+            transaction_type,
+            transaction_amount
+         ) values ( trans_details_rec.account_no,
+                    trans_rec.transaction_no,
+                    trans_details_rec.transaction_type,
+                    trans_details_rec.transaction_amount );
+
+      end loop; -- inserted 04012025 Bhel
         
-        END LOOP; -- inserted 04012025 Bhel
-        
-         INSERT INTO transaction_history (
-                transaction_no, transaction_date, description
-            ) VALUES (
-                trans_rec.transaction_no,
-                trans_details_rec.transaction_date,
-                trans_details_rec.description
-            );
+        -- Insert into TRANSACTION_HISTORY
+      insert into transaction_history (
+         transaction_no,
+         transaction_date,
+         description
+      ) values ( trans_rec.transaction_no,
+                 trans_details_rec.transaction_date,
+                 trans_details_rec.description );
 
 
         -- Delete processed rows from NEW_TRANSACTIONS 
-        DELETE FROM new_transactions
-        WHERE transaction_no = trans_rec.transaction_no;
+      delete from new_transactions
+       where transaction_no = trans_rec.transaction_no;
 
-    END LOOP;
-    
-    COMMIT;
-    
-END;
+   end loop;
+
+   commit;
+end;
 /
-        
-        
-    
-    
