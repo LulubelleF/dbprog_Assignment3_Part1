@@ -24,13 +24,19 @@ declare
         where a.account_no = p_account_no;
 
     v_default_trans_type account_type.default_trans_type%type;
+    v_transaction_date DATE; --added by gab
+    v_description VARCHAR2(100); -- added by gab  
 
 begin 
     -- Outer loop: Loop through each distinct transaction number
    for trans_rec in trans_cursor loop
+   
         -- Inner loop: Loop through each row for the current transaction number
       for trans_details_rec in trans_details_cursor(trans_rec.transaction_no) loop
-            
+      
+      v_transaction_date := trans_details_rec.transaction_date; -- added by gab
+      v_description := trans_details_rec.description; -- added by gab
+      
         -- Fetch the default transaction type
         open account_type_cursor(trans_details_rec.account_no);
         fetch account_type_cursor into v_default_trans_type;
@@ -64,7 +70,6 @@ begin
             end if;
         end if;
         
-        
             -- Insert into TRANSACTION_DETAIL
          insert into transaction_detail (
             account_no,
@@ -79,14 +84,15 @@ begin
       end loop; -- inserted 04012025 Bhel
         
         -- Insert into TRANSACTION_HISTORY
-      insert into transaction_history (
-         transaction_no,
-         transaction_date,
-         description
-      ) values ( trans_rec.transaction_no,
-                 trans_details_rec.transaction_date,
-                 trans_details_rec.description );
-
+       insert into transaction_history (
+            transaction_no,
+            transaction_date,
+            description
+        ) values (
+            trans_rec.transaction_no,
+            v_transaction_date, -- changed by gab
+            v_description  -- changed by gab
+        );
 
         -- Delete processed rows from NEW_TRANSACTIONS 
       delete from new_transactions
